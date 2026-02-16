@@ -1,7 +1,8 @@
+import os
 import socket
 
-HOST = "127.0.0.1"
-PORT = 9000
+HOST = os.getenv("ECHO_HOST", "127.0.0.1")
+PORT = int(os.getenv("ECHO_PORT", 9000))
 
 def main():
     message = "Hello from client!\n"
