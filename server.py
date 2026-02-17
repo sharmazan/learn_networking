@@ -1,17 +1,23 @@
 import socket
+import threading
 
 HOST = "0.0.0.0"
 PORT = 9000
 
 def handle_client(conn, addr):
     print(f"Connected by { addr }")
+    buf = b""
     with conn:
         while True:
-            data = conn.recv(1024)
-            if not data:
+            chunk = conn.recv(1024)
+            if not chunk:
                 print(f"Client disconnected: { addr }")
                 return
-            conn.sendall(data)
+            buf += chunk
+
+            while b"\n" in buf:
+                line, buf = buf.split(b"\n", 1)  # take one line
+                conn.sendall(line + b"\n")       # echo one line back
 
 
 def main():
@@ -19,14 +25,14 @@ def main():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # Allows quick restart (re-use the port)
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
         s.bind((HOST, PORT))
         s.listen()
-        print(f"Echo server listening on {HOST}:{PORT} ...")
+        print(f"Threaded echo server listening on {HOST}:{PORT} ...")
 
         while True:
             conn, addr = s.accept()  # blocks until a client connects
-            handle_client(conn, addr)
+            t = threading.Thread(target=handle_client, args=(conn, addr), daemon=True)
+            t.start()
 
 if __name__ == "__main__":
     main()
