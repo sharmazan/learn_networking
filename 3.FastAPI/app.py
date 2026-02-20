@@ -88,3 +88,14 @@ def update_task(task_id: int, patch: TaskUpdate):
     tasks_db[task_id] = updated_task
     return updated_task
 
+
+@app.put("/tasks/{task_id}", response_model=TaskOut)
+def replace_task(task_id: int, new_task: TaskCreate):
+    task = tasks_db.get(task_id)
+    if task is None:
+        raise HTTPExcept(status_code=404, detail="Task not found")
+    updates = new_task.model_dump()
+    updated_task = task.model_copy(update=updates)
+    tasks_db[task_id] = updated_task
+    return updated_task
+
