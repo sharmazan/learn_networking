@@ -56,8 +56,10 @@ def create_task(task: TaskCreate):
 
 
 @app.get("/tasks", response_model=list[TaskOut])
-def list_tasks():
-    return list(tasks_db.values())
+def list_tasks(done: bool | None = None):
+    if done is None:
+        return list(tasks_db.values())
+    return [task for task in tasks_db.values() if task.done == done]
 
 
 @app.get("/tasks/{task_id}", response_model=TaskOut)
