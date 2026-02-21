@@ -43,3 +43,24 @@ def test_delete_removes_task(client):
     r3 = client.get(f"/tasks/{ task_id }")
     assert r3.status_code == 404
 
+
+def test_put_task(client):
+    r_create = client.post("/tasks", json={"name": "Task1", "description": "Test"})
+    task_id = r_create.json()["id"]
+
+    r_put = client.put(f"/tasks/{ task_id }", json={"name": "New task", "done": True})
+    assert r_put.status_code == 200
+    updated_task = r_put.json()
+    expected_task = {"id": task_id, "name": "New task", "description": None, "done": True}
+    assert updated_task == expected_task
+
+
+def test_patch_task(client):
+    r_create = client.post("/tasks", json={"name": "Task1", "description": "Test"})
+    task_id = r_create.json()["id"]
+
+    r_put = client.patch(f"/tasks/{ task_id }", json={"done": True})
+    assert r_put.status_code == 200
+    updated_task = r_put.json()
+    expected_task = {"id": task_id, "name": "Task1", "description": "Test", "done": True}
+    assert updated_task == expected_task
