@@ -64,6 +64,14 @@ class InMemoryStorage(Storage):
             return True
         return False
 
+    def save(self, task: TaskOut) -> TaskOut:
+        try:
+            self.tasks_db[task.id] = task
+        except KeyError:
+            return False
+        return True
+
+
 
 storage = InMemoryStorage()
 
@@ -122,24 +130,25 @@ def delete_task(task_id: int, storage: Storage = Depends(get_storage)):
 
 
 @app.patch("/tasks/{task_id}", response_model=TaskOut)
-def update_task(task_id: int, patch: TaskUpdate):
-    try:
-        task = tasks_db[task_id]
-    except KeyError:
+def patch_task(task_id: int, patch: TaskUpdate, storage: Storage = Depends(get_storage)):
+    task = storage.get(task_id)
+    if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     updates = patch.model_dump(exclude_unset=True)
     updated_task = task.model_copy(update=updates)
-    tasks_db[task_id] = updated_task
+    if not storage.save(updated_task):
+        raise HTTPException(status_code=500, detail="Can not save the task")
     return updated_task
 
 
 @app.put("/tasks/{task_id}", response_model=TaskOut)
-def replace_task(task_id: int, new_task: TaskCreate):
-    task = tasks_db.get(task_id)
+def replace_task(task_id: int, new_task: TaskCreate, storage: Storage = Depends(get_storage)):
+    task = storage.get(task_id)
     if task is None:
-        raise HTTPExcept(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Task not found")
     updates = new_task.model_dump()
     updated_task = task.model_copy(update=updates)
-    tasks_db[task_id] = updated_task
+    if not storage.save(updated_task):
+        raise HTTPException(status_code=500, detail="Can not save the task")
     return updated_task
 

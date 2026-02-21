@@ -32,6 +32,17 @@ def test_get_missing_returns_404(client):
     assert r.json()["detail"] == "Task not found"
 
 
+
+def test_get_sucess(client):
+    r1 = client.post("/tasks", json={"name": "Task1"})
+    task_id = r1.json()["id"]
+
+    r_get = client.get(f"/tasks/{ task_id }")
+    assert r_get.status_code == 200
+    task = r_get.json()
+    assert task == {"id": task_id, "name": "Task1", "description": None, "done": False}
+
+
 def test_delete_removes_task(client):
     r1 = client.post("/tasks", json={"name": "Task1"})
     task_id = r1.json()["id"]
@@ -55,6 +66,11 @@ def test_put_task(client):
     assert updated_task == expected_task
 
 
+def test_put_task_not_found(client):
+    r_put = client.put(f"/tasks/404", json={"name": "New task", "done": True})
+    assert r_put.status_code == 404
+    
+
 def test_patch_task(client):
     r_create = client.post("/tasks", json={"name": "Task1", "description": "Test"})
     task_id = r_create.json()["id"]
@@ -64,3 +80,9 @@ def test_patch_task(client):
     updated_task = r_put.json()
     expected_task = {"id": task_id, "name": "Task1", "description": "Test", "done": True}
     assert updated_task == expected_task
+
+
+def test_patch_task_not_found(client):
+    r_put = client.patch(f"/tasks/404", json={"done": True})
+    assert r_put.status_code == 404
+
